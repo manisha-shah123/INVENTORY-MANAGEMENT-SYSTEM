@@ -1,0 +1,71 @@
+const mongoose = require("mongoose");
+
+const clientSchema = new mongoose.Schema(
+  {
+    name: {
+      type: String,
+      required: [true, "Name is required"],
+      trim: true,
+      validate: {
+        validator: function (value) {
+          return /[A-Za-z]/.test(value);
+        },
+        message: "Name must contain letters, not just numbers",
+      },
+    },
+
+    type: {
+      type: String,
+      enum: ["customer", "supplier"],
+      required: [true, "Client type is required"],
+    },
+
+    address: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+
+    email: {
+      type: String,
+      trim: true,
+      lowercase: true,
+      default: "",
+    },
+
+    phone: {
+      type: String,
+      trim: true,
+      default: "",
+      validate: {
+        validator: function (value) {
+          if (!value) return true; // optional field
+          return /^\d{10}$/.test(value);
+        },
+        message: "Phone number must be exactly 10 digits",
+      },
+    },
+
+    vatNumber: {
+      type: String,
+      trim: true,
+      default: "",
+      validate: {
+        validator: function (value) {
+          if (!value) return true; // optional field
+          return /^\d{9}$/.test(value);
+        },
+        message: "VAT number must be exactly 9 digits",
+      },
+    },
+  },
+  {
+    timestamps: true,
+  },
+);
+
+clientSchema.index({ type: 1, name: 1 });
+
+const Client = mongoose.model("Client", clientSchema);
+
+module.exports = Client;
