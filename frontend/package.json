@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "@sbmdkl/nepali-date-converter": "^2.0.5",
     "axios": "^1.20.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",

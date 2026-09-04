@@ -381,3 +381,103 @@ label {
   color: #64748b;
   margin-top: 4px;
 }
+
+.date-input-wrapper {
+  position: relative;
+}
+
+.date-input-toggle {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+
+.date-toggle-btn {
+  padding: 4px 10px;
+  font-size: 12px;
+  border: 1px solid #d7dce1;
+  background: #fff;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.date-toggle-btn.active {
+  background: #1e293b;
+  color: #fff;
+  border-color: #1e293b;
+}
+
+.bs-date-picker {
+  position: relative;
+}
+
+.bs-calendar-panel {
+  position: absolute;
+  z-index: 20;
+  top: 100%;
+  left: 0;
+  margin-top: 4px;
+  background: #fff;
+  border: 1px solid #d7dce1;
+  border-radius: 10px;
+  padding: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  width: 260px;
+}
+
+.bs-calendar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.bs-calendar-header button {
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 4px 8px;
+}
+
+.bs-calendar-header button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.bs-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.bs-calendar-day-label {
+  text-align: center;
+  font-size: 11px;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.bs-calendar-cell {
+  border: none;
+  background: none;
+  padding: 6px 0;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.bs-calendar-cell:hover:not(:disabled) {
+  background: #eef2ff;
+}
+
+.bs-calendar-cell.today {
+  border: 1px solid #1e293b;
+  font-weight: 700;
+}
+
+.bs-calendar-cell:disabled {
+  color: #cbd5e1;
+  cursor: not-allowed;
+}

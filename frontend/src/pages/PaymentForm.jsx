@@ -5,6 +5,7 @@ import {
   fetchPendingInvoices,
   createPayment,
 } from "../services/paymentService";
+import DateInput from "../components/DateInput";
 
 const EMPTY_FORM = {
   type: "purchase",
@@ -80,9 +81,7 @@ const PaymentForm = () => {
 
     if (!form.clientId) return setError("Please select a client.");
     if (!form.invoiceId) return setError("Please select an invoice.");
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(form.date)) {
-      return setError("Date must be in YYYY-MM-DD format (Bikram Sambat).");
-    }
+    if (!form.date) return setError("Please select a date.");
     const amt = Number(form.amount);
     if (!amt || amt <= 0) return setError("Amount must be greater than 0.");
     if (selectedInvoice && amt > selectedInvoice.dueAmount) {
@@ -119,7 +118,7 @@ const PaymentForm = () => {
           <label htmlFor="type">Type</label>
           <select id="type" value={form.type} onChange={handleChange("type")}>
             <option value="purchase">Payment to Supplier</option>
-            <option value="sale">Payment from Customer</option>
+            <option value="invoice">Payment from Customer</option>
           </select>
         </div>
 
@@ -163,8 +162,7 @@ const PaymentForm = () => {
             </option>
             {invoices.map((inv) => (
               <option key={inv._id} value={inv._id}>
-                Inv #{inv.invoiceNumber} — {inv.product?.name} — Due:{" "}
-                {inv.dueAmount.toLocaleString()}
+                Inv #{inv.invoiceNumber} — Due: {inv.dueAmount.toLocaleString()}
               </option>
             ))}
           </select>
@@ -176,16 +174,12 @@ const PaymentForm = () => {
         </div>
 
         <div className="login-field">
-          <label htmlFor="date">Date (Bikram Sambat)</label>
-          <input
+          <label htmlFor="date">Date</label>
+          <DateInput
             id="date"
-            type="text"
-            placeholder="2081-01-22"
             value={form.date}
-            onChange={handleChange("date")}
-            required
+            onChange={(adIso) => setForm((prev) => ({ ...prev, date: adIso }))}
           />
-          <p className="field-hint">Enter date in BS (e.g., 2081-01-22)</p>
         </div>
 
         <div className="login-field">

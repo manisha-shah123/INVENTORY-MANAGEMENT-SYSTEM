@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { createExpense } from "../services/expenseService";
+import DateInput from "../components/DateInput";
 
 const CATEGORIES = [
   "Transport",
@@ -34,9 +35,7 @@ const ExpenseForm = () => {
     event.preventDefault();
     setError("");
 
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(form.date)) {
-      return setError("Date must be in YYYY-MM-DD format (Bikram Sambat).");
-    }
+    if (!form.date) return setError("Please select a date.");
     const amt = Number(form.amount);
     if (!amt || amt <= 0) return setError("Amount must be greater than 0.");
 
@@ -77,16 +76,12 @@ const ExpenseForm = () => {
         </div>
 
         <div className="login-field">
-          <label htmlFor="date">Date (Bikram Sambat)</label>
-          <input
+          <label htmlFor="date">Date</label>
+          <DateInput
             id="date"
-            type="text"
-            placeholder="2081-01-22"
             value={form.date}
-            onChange={handleChange("date")}
-            required
+            onChange={(adIso) => setForm((prev) => ({ ...prev, date: adIso }))}
           />
-          <p className="field-hint">Enter date in BS (e.g., 2081-01-22)</p>
         </div>
 
         <div className="login-field">

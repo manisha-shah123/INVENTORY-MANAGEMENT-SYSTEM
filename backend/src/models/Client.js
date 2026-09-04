@@ -20,6 +20,18 @@ const clientSchema = new mongoose.Schema(
       required: [true, "Client type is required"],
     },
 
+    customerCategory: {
+      type: String,
+      enum: ["distributor", "wholesaler", "retailer", "normal"],
+      default: "normal",
+    },
+
+    country: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+
     address: {
       type: String,
       trim: true,
@@ -39,7 +51,7 @@ const clientSchema = new mongoose.Schema(
       default: "",
       validate: {
         validator: function (value) {
-          if (!value) return true; // optional field
+          if (!value) return true;
           return /^\d{10}$/.test(value);
         },
         message: "Phone number must be exactly 10 digits",
@@ -52,7 +64,7 @@ const clientSchema = new mongoose.Schema(
       default: "",
       validate: {
         validator: function (value) {
-          if (!value) return true; // optional field
+          if (!value) return true;
           return /^\d{9}$/.test(value);
         },
         message: "VAT number must be exactly 9 digits",

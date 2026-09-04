@@ -55,12 +55,17 @@ const ProductList = () => {
             Manage your product catalog and stock levels.
           </p>
         </div>
-        <button
-          className="btn btn-primary"
-          onClick={() => navigate("/dashboard/products/new")}
-        >
-          + Add New Product
-        </button>
+        <div className="table-actions">
+          <Link className="btn btn-outline" to="/dashboard/products/attributes">
+            Manage Brand / Category / Grade / Size
+          </Link>
+          <button
+            className="btn btn-primary"
+            onClick={() => navigate("/dashboard/products/new")}
+          >
+            + Add New Product
+          </button>
+        </div>
       </div>
 
       <form className="search-bar" onSubmit={handleSearchSubmit}>

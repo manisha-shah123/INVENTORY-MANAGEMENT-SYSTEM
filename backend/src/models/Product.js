@@ -22,11 +22,11 @@ const productSchema = new mongoose.Schema(
       unique: true,
     },
 
-    category: {
-      type: String,
-      trim: true,
-      default: "",
-    },
+    brand: { type: String, trim: true, default: "" },
+    category: { type: String, trim: true, default: "" },
+    grade: { type: String, trim: true, default: "" },
+    size: { type: String, trim: true, default: "" },
+    hsCode: { type: String, trim: true, default: "" },
 
     unit: {
       type: String,
@@ -58,9 +58,7 @@ const productSchema = new mongoose.Schema(
       min: [0, "Minimum stock cannot be negative"],
     },
   },
-  {
-    timestamps: true,
-  },
+  { timestamps: true },
 );
 
 productSchema.index({ name: 1 });

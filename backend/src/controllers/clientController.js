@@ -45,7 +45,16 @@ const getClientById = async (req, res) => {
 
 const createClient = async (req, res) => {
   try {
-    const { name, type, address, email, phone, vatNumber } = req.body;
+    const {
+      name,
+      type,
+      customerCategory,
+      country,
+      address,
+      email,
+      phone,
+      vatNumber,
+    } = req.body;
 
     if (!name || !name.trim()) {
       return res
@@ -63,6 +72,9 @@ const createClient = async (req, res) => {
     const client = await Client.create({
       name: name.trim(),
       type,
+      customerCategory:
+        type === "customer" ? customerCategory || "normal" : undefined,
+      country: type === "supplier" ? country : undefined,
       address,
       email,
       phone,
@@ -94,7 +106,16 @@ const createClient = async (req, res) => {
 
 const updateClient = async (req, res) => {
   try {
-    const { name, type, address, email, phone, vatNumber } = req.body;
+    const {
+      name,
+      type,
+      customerCategory,
+      country,
+      address,
+      email,
+      phone,
+      vatNumber,
+    } = req.body;
 
     if (type && !VALID_TYPES.includes(type)) {
       return res.status(400).json({
@@ -105,7 +126,17 @@ const updateClient = async (req, res) => {
 
     const client = await Client.findByIdAndUpdate(
       req.params.id,
-      { name, type, address, email, phone, vatNumber },
+      {
+        name,
+        type,
+        customerCategory:
+          type === "customer" ? customerCategory || "normal" : undefined,
+        country: type === "supplier" ? country : undefined,
+        address,
+        email,
+        phone,
+        vatNumber,
+      },
       { new: true, runValidators: true },
     );
 

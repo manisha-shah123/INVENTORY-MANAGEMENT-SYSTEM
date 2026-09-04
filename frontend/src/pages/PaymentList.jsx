@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { fetchPayments, deletePayment } from "../services/paymentService";
+import { formatBsFromAd } from "../utils/bsDate";
 
 const PaymentList = () => {
   const [payments, setPayments] = useState([]);
@@ -82,7 +83,7 @@ const PaymentList = () => {
             <tbody>
               {payments.map((payment) => (
                 <tr key={payment._id}>
-                  <td>{payment.date}</td>
+                  <td>{formatBsFromAd(payment.date)}</td>
                   <td>
                     <span
                       className={

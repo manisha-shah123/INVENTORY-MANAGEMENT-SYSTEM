@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { fetchPurchases, deletePurchase } from "../services/purchaseService";
+import { formatBsFromAd } from "../utils/bsDate";
 
 const PurchaseList = () => {
   const [purchases, setPurchases] = useState([]);
@@ -84,7 +85,7 @@ const PurchaseList = () => {
             <tbody>
               {purchases.map((purchase) => (
                 <tr key={purchase._id}>
-                  <td>{purchase.date}</td>
+                  <td>{formatBsFromAd(purchase.date)}</td>
                   <td>{purchase.supplier?.name || "—"}</td>
                   <td>
                     {purchase.product?.name} ({purchase.product?.sku})

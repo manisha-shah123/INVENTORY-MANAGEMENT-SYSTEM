@@ -11,12 +11,13 @@ import ProductForm from "./pages/ProductForm";
 import StockAdjustment from "./pages/StockAdjustment";
 import PurchaseList from "./pages/PurchaseList";
 import PurchaseForm from "./pages/PurchaseForm";
-import SaleList from "./pages/SaleList";
-import SaleForm from "./pages/SaleForm";
+import InvoiceList from "./pages/InvoiceList";
+import InvoiceForm from "./pages/InvoiceForm";
 import PaymentList from "./pages/PaymentList";
 import PaymentForm from "./pages/PaymentForm";
 import ExpenseList from "./pages/ExpenseList";
 import ExpenseForm from "./pages/ExpenseForm";
+import ProductAttributes from "./pages/ProductAttributes";
 import ComingSoon from "./pages/ComingSoon";
 
 function App() {
@@ -39,6 +40,7 @@ function App() {
             <Route path="products/new" element={<ProductForm />} />
             <Route path="products/:id/edit" element={<ProductForm />} />
             <Route path="products/:id/stock" element={<StockAdjustment />} />
+            <Route path="products/attributes" element={<ProductAttributes />} />
             <Route path="customers" element={<ClientList type="customer" />} />
             <Route
               path="customers/new"
@@ -59,8 +61,8 @@ function App() {
             />
             <Route path="purchases" element={<PurchaseList />} />
             <Route path="purchases/new" element={<PurchaseForm />} />
-            <Route path="sales" element={<SaleList />} />
-            <Route path="sales/new" element={<SaleForm />} />
+            <Route path="sales" element={<InvoiceList />} />
+            <Route path="sales/new" element={<InvoiceForm />} />
             <Route path="hisab-kitab" element={<PaymentList />} />
             <Route path="hisab-kitab/new" element={<PaymentForm />} />
             <Route path="expenses" element={<ExpenseList />} />

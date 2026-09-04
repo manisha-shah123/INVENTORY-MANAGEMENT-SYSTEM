@@ -1,9 +1,9 @@
 const Payment = require("../models/Payment");
 const Purchase = require("../models/Purchase");
-const Sale = require("../models/Sale");
+const Invoice = require("../models/Invoice");
 const Client = require("../models/Client");
 
-const MODEL_BY_TYPE = { purchase: Purchase, sale: Sale };
+const MODEL_BY_TYPE = { purchase: Purchase, invoice: Invoice };
 
 const getPayments = async (req, res) => {
   try {
@@ -24,15 +24,17 @@ const getPayments = async (req, res) => {
   }
 };
 
-// GET /api/payments/pending?type=purchase|sale&clientId=...
 const getPendingInvoices = async (req, res) => {
   try {
     const { type, clientId } = req.query;
 
-    if (!["purchase", "sale"].includes(type)) {
+    if (!["purchase", "invoice"].includes(type)) {
       return res
         .status(400)
-        .json({ success: false, message: "Type must be 'purchase' or 'sale'" });
+        .json({
+          success: false,
+          message: "Type must be 'purchase' or 'invoice'",
+        });
     }
     if (!clientId) {
       return res
@@ -46,9 +48,7 @@ const getPendingInvoices = async (req, res) => {
     const invoices = await Model.find({
       [filterField]: clientId,
       dueAmount: { $gt: 0 },
-    })
-      .populate("product", "name sku unit")
-      .sort({ createdAt: -1 });
+    }).sort({ createdAt: -1 });
 
     res.status(200).json({ success: true, data: invoices });
   } catch (error) {
@@ -63,10 +63,13 @@ const createPayment = async (req, res) => {
     const { type, invoiceId, clientId, date, amount, method, remarks } =
       req.body;
 
-    if (!["purchase", "sale"].includes(type)) {
+    if (!["purchase", "invoice"].includes(type)) {
       return res
         .status(400)
-        .json({ success: false, message: "Type must be 'purchase' or 'sale'" });
+        .json({
+          success: false,
+          message: "Type must be 'purchase' or 'invoice'",
+        });
     }
     if (!invoiceId || !clientId || !date || amount === undefined || !method) {
       return res
@@ -94,31 +97,31 @@ const createPayment = async (req, res) => {
     }
 
     const Model = MODEL_BY_TYPE[type];
-    const invoice = await Model.findById(invoiceId);
-    if (!invoice) {
+    const invoiceDoc = await Model.findById(invoiceId);
+    if (!invoiceDoc) {
       return res
         .status(404)
         .json({ success: false, message: "Invoice not found" });
     }
 
-    if (amt > invoice.dueAmount) {
+    if (amt > invoiceDoc.dueAmount) {
       return res.status(400).json({
         success: false,
-        message: `Amount cannot exceed the due amount (${invoice.dueAmount}).`,
+        message: `Amount cannot exceed the due amount (${invoiceDoc.dueAmount}).`,
       });
     }
 
     if (type === "purchase") {
-      invoice.amountPaid += amt;
+      invoiceDoc.amountPaid += amt;
     } else {
-      invoice.amountReceived += amt;
+      invoiceDoc.amountReceived += amt;
     }
-    invoice.dueAmount -= amt;
-    await invoice.save();
+    invoiceDoc.dueAmount -= amt;
+    await invoiceDoc.save();
 
     const payment = await Payment.create({
-      referenceModel: type === "purchase" ? "Purchase" : "Sale",
-      reference: invoice._id,
+      referenceModel: type === "purchase" ? "Purchase" : "Invoice",
+      reference: invoiceDoc._id,
       client: clientId,
       date,
       amount: amt,
@@ -152,17 +155,17 @@ const deletePayment = async (req, res) => {
         .json({ success: false, message: "Payment not found" });
     }
 
-    const Model = payment.referenceModel === "Purchase" ? Purchase : Sale;
-    const invoice = await Model.findById(payment.reference);
+    const Model = payment.referenceModel === "Purchase" ? Purchase : Invoice;
+    const invoiceDoc = await Model.findById(payment.reference);
 
-    if (invoice) {
+    if (invoiceDoc) {
       if (payment.referenceModel === "Purchase") {
-        invoice.amountPaid -= payment.amount;
+        invoiceDoc.amountPaid -= payment.amount;
       } else {
-        invoice.amountReceived -= payment.amount;
+        invoiceDoc.amountReceived -= payment.amount;
       }
-      invoice.dueAmount += payment.amount;
-      await invoice.save();
+      invoiceDoc.dueAmount += payment.amount;
+      await invoiceDoc.save();
     }
 
     await payment.deleteOne();

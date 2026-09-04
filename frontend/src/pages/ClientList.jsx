@@ -7,6 +7,13 @@ const LABELS = {
   supplier: { title: "Suppliers", singular: "Supplier" },
 };
 
+const CATEGORY_LABELS = {
+  normal: "Normal Customer",
+  distributor: "Distributor",
+  wholesaler: "Wholesaler",
+  retailer: "Retailer",
+};
+
 const ClientList = ({ type }) => {
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -80,6 +87,8 @@ const ClientList = ({ type }) => {
             <thead>
               <tr>
                 <th>Name</th>
+                {type === "customer" && <th>Customer Type</th>}
+                {type === "supplier" && <th>Country</th>}
                 <th>Phone</th>
                 <th>Email</th>
                 <th>VAT Number</th>
@@ -90,6 +99,13 @@ const ClientList = ({ type }) => {
               {clients.map((client) => (
                 <tr key={client._id}>
                   <td>{client.name}</td>
+                  {type === "customer" && (
+                    <td>
+                      {CATEGORY_LABELS[client.customerCategory] ||
+                        "Normal Customer"}
+                    </td>
+                  )}
+                  {type === "supplier" && <td>{client.country || "—"}</td>}
                   <td>{client.phone || "—"}</td>
                   <td>{client.email || "—"}</td>
                   <td>{client.vatNumber || "—"}</td>

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { fetchExpenses, deleteExpense } from "../services/expenseService";
+import { formatBsFromAd } from "../utils/bsDate";
 
 const ExpenseList = () => {
   const [expenses, setExpenses] = useState([]);
@@ -79,7 +80,7 @@ const ExpenseList = () => {
             <tbody>
               {expenses.map((expense) => (
                 <tr key={expense._id}>
-                  <td>{expense.date}</td>
+                  <td>{formatBsFromAd(expense.date)}</td>
                   <td>{expense.category}</td>
                   <td>{expense.description || "—"}</td>
                   <td>{expense.amount.toLocaleString()}</td>

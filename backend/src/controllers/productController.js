@@ -8,7 +8,12 @@ const getProducts = async (req, res) => {
 
     if (search) {
       const regex = new RegExp(search.trim(), "i");
-      filter.$or = [{ name: regex }, { sku: regex }, { category: regex }];
+      filter.$or = [
+        { name: regex },
+        { sku: regex },
+        { category: regex },
+        { brand: regex },
+      ];
     }
 
     const products = await Product.find(filter).sort({ name: 1 });
@@ -44,7 +49,11 @@ const createProduct = async (req, res) => {
     const {
       name,
       sku,
+      brand,
       category,
+      grade,
+      size,
+      hsCode,
       unit,
       purchasePrice,
       sellingPrice,
@@ -78,7 +87,11 @@ const createProduct = async (req, res) => {
     const product = await Product.create({
       name: name.trim(),
       sku: sku.trim(),
+      brand,
       category,
+      grade,
+      size,
+      hsCode,
       unit,
       purchasePrice: purchasePriceNum,
       sellingPrice: sellingPriceNum,
@@ -126,7 +139,11 @@ const updateProduct = async (req, res) => {
     const {
       name,
       sku,
+      brand,
       category,
+      grade,
+      size,
+      hsCode,
       unit,
       purchasePrice,
       sellingPrice,
@@ -148,7 +165,11 @@ const updateProduct = async (req, res) => {
       {
         name,
         sku,
+        brand,
         category,
+        grade,
+        size,
+        hsCode,
         unit,
         purchasePrice: purchasePriceNum,
         sellingPrice: sellingPriceNum,

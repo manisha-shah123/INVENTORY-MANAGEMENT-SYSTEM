@@ -1,15 +1,25 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, Link } from "react-router-dom";
 import {
   fetchProductById,
   createProduct,
   updateProduct,
 } from "../services/productService";
+import {
+  brandService,
+  categoryService,
+  gradeService,
+  sizeService,
+} from "../services/attributeService";
 
 const EMPTY_FORM = {
   name: "",
   sku: "",
+  brand: "",
   category: "",
+  grade: "",
+  size: "",
+  hsCode: "",
   unit: "pcs",
   purchasePrice: "",
   sellingPrice: "",
@@ -42,42 +52,69 @@ const validateForm = (form) => {
   return "";
 };
 
+// Ensures a legacy/free-text value that isn't in the master list still shows up as an option,
+// instead of silently disappearing from the dropdown.
+const withFallback = (list, currentValue) => {
+  if (!currentValue) return list;
+  const exists = list.some((item) => item.name === currentValue);
+  return exists ? list : [{ _id: "current", name: currentValue }, ...list];
+};
+
 const ProductForm = () => {
   const { id } = useParams();
   const isEditMode = Boolean(id);
 
   const [form, setForm] = useState(EMPTY_FORM);
-  const [loading, setLoading] = useState(isEditMode);
+  const [brands, setBrands] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [grades, setGrades] = useState([]);
+  const [sizes, setSizes] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!isEditMode) return;
-
-    const loadProduct = async () => {
+    const loadAll = async () => {
       try {
-        const result = await fetchProductById(id);
-        const product = result.data;
-        setForm({
-          name: product.name || "",
-          sku: product.sku || "",
-          category: product.category || "",
-          unit: product.unit || "pcs",
-          purchasePrice: String(product.purchasePrice ?? ""),
-          sellingPrice: String(product.sellingPrice ?? ""),
-          minimumStock: String(product.minimumStock ?? ""),
-          openingStock: "",
-        });
+        const [brandRes, categoryRes, gradeRes, sizeRes] = await Promise.all([
+          brandService.fetchAll(),
+          categoryService.fetchAll(),
+          gradeService.fetchAll(),
+          sizeService.fetchAll(),
+        ]);
+        setBrands(brandRes.data);
+        setCategories(categoryRes.data);
+        setGrades(gradeRes.data);
+        setSizes(sizeRes.data);
+
+        if (isEditMode) {
+          const result = await fetchProductById(id);
+          const product = result.data;
+          setForm({
+            name: product.name || "",
+            sku: product.sku || "",
+            brand: product.brand || "",
+            category: product.category || "",
+            grade: product.grade || "",
+            size: product.size || "",
+            hsCode: product.hsCode || "",
+            unit: product.unit || "pcs",
+            purchasePrice: String(product.purchasePrice ?? ""),
+            sellingPrice: String(product.sellingPrice ?? ""),
+            minimumStock: String(product.minimumStock ?? ""),
+            openingStock: "",
+          });
+        }
       } catch (err) {
-        setError("Couldn't load this product.");
+        setError("Couldn't load product attributes.");
       } finally {
         setLoading(false);
       }
     };
 
-    loadProduct();
+    loadAll();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
@@ -100,7 +137,11 @@ const ProductForm = () => {
     const payload = {
       name: form.name,
       sku: form.sku,
+      brand: form.brand,
       category: form.category,
+      grade: form.grade,
+      size: form.size,
+      hsCode: form.hsCode,
       unit: form.unit,
       purchasePrice: Number(form.purchasePrice),
       sellingPrice: Number(form.sellingPrice),
@@ -132,11 +173,7 @@ const ProductForm = () => {
 
   return (
     <div>
-      <h1 className="page-title">
-        {isEditMode ? "Edit Product" : "Add New Product"}
-      </h1>
-
-      <form className="form-card" onSubmit={handleSubmit}>
+      <form className="form-wcard" onSubmit={handleSubmit}>
         <div className="login-field">
           <label htmlFor="name">Product Name</label>
           <input
@@ -161,11 +198,71 @@ const ProductForm = () => {
 
         <div className="login-field">
           <label htmlFor="category">Category</label>
-          <input
+          <select
             id="category"
-            type="text"
             value={form.category}
             onChange={handleChange("category")}
+          >
+            <option value="">-- Select Category --</option>
+            {withFallback(categories, form.category).map((c) => (
+              <option key={c._id} value={c.name}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="login-field">
+          <label htmlFor="brand">Brand</label>
+          <select
+            id="brand"
+            value={form.brand}
+            onChange={handleChange("brand")}
+          >
+            <option value="">-- Select Brand --</option>
+            {withFallback(brands, form.brand).map((b) => (
+              <option key={b._id} value={b.name}>
+                {b.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="login-field">
+          <label htmlFor="grade">Grade</label>
+          <select
+            id="grade"
+            value={form.grade}
+            onChange={handleChange("grade")}
+          >
+            <option value="">-- Select Grade --</option>
+            {withFallback(grades, form.grade).map((g) => (
+              <option key={g._id} value={g.name}>
+                {g.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="login-field">
+          <label htmlFor="size">Size</label>
+          <select id="size" value={form.size} onChange={handleChange("size")}>
+            <option value="">-- Select Size --</option>
+            {withFallback(sizes, form.size).map((s) => (
+              <option key={s._id} value={s.name}>
+                {s.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="login-field">
+          <label htmlFor="hsCode">HS Code</label>
+          <input
+            id="hsCode"
+            type="text"
+            value={form.hsCode}
+            onChange={handleChange("hsCode")}
           />
         </div>
 

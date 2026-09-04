@@ -1,6 +1,6 @@
 const Product = require("../models/Product");
 const Purchase = require("../models/Purchase");
-const Sale = require("../models/Sale");
+const Invoice = require("../models/Invoice");
 const Expense = require("../models/Expense");
 
 const getDashboardSummary = async (req, res) => {
@@ -11,11 +11,11 @@ const getDashboardSummary = async (req, res) => {
       0,
     );
 
-    const [salesAgg] = await Sale.aggregate([
+    const [salesAgg] = await Invoice.aggregate([
       {
         $group: {
           _id: null,
-          total: { $sum: "$total" },
+          total: { $sum: "$grandTotal" },
           due: { $sum: "$dueAmount" },
         },
       },

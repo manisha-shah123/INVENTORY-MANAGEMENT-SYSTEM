@@ -4,7 +4,7 @@ const paymentSchema = new mongoose.Schema(
   {
     referenceModel: {
       type: String,
-      enum: ["Purchase", "Sale"],
+      enum: ["Purchase", "Invoice"],
       required: true,
     },
     reference: {

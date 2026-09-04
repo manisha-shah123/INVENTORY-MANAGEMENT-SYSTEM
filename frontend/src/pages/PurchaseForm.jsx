@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { fetchClients } from "../services/clientService";
 import { fetchProducts } from "../services/productService";
 import { createPurchase } from "../services/purchaseService";
+import DateInput from "../components/DateInput";
 
 const EMPTY_FORM = {
   supplierId: "",
@@ -61,9 +62,7 @@ const PurchaseForm = () => {
     if (!form.productId) return setError("Please select a product.");
     if (!form.invoiceNumber.trim())
       return setError("Invoice number is required.");
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(form.date)) {
-      return setError("Date must be in YYYY-MM-DD format (Bikram Sambat).");
-    }
+    if (!form.date) return setError("Please select a date.");
     if (quantity <= 0) return setError("Quantity must be greater than 0.");
     if (rate < 0) return setError("Rate cannot be negative.");
     if (amountPaid < 0) return setError("Amount paid cannot be negative.");
@@ -133,16 +132,12 @@ const PurchaseForm = () => {
         </div>
 
         <div className="login-field">
-          <label htmlFor="date">Date (Bikram Sambat)</label>
-          <input
+          <label htmlFor="date">Date</label>
+          <DateInput
             id="date"
-            type="text"
-            placeholder="2081-01-22"
             value={form.date}
-            onChange={handleChange("date")}
-            required
+            onChange={(adIso) => setForm((prev) => ({ ...prev, date: adIso }))}
           />
-          <p className="field-hint">Enter date in BS (e.g., 2081-01-22)</p>
         </div>
 
         <div className="login-field">

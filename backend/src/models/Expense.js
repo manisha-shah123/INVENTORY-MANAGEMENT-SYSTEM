@@ -23,9 +23,13 @@ const expenseSchema = new mongoose.Schema(
       required: [true, "Date is required"],
       validate: {
         validator: function (value) {
-          return /^\d{4}-\d{2}-\d{2}$/.test(value);
+          if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+          const inputDate = new Date(value + "T00:00:00");
+          const today = new Date();
+          today.setHours(23, 59, 59, 999);
+          return inputDate <= today;
         },
-        message: "Date must be in YYYY-MM-DD format",
+        message: "Date cannot be in the future",
       },
     },
 

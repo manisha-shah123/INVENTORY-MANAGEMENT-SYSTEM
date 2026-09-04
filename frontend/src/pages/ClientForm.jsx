@@ -11,12 +11,21 @@ const LABELS = {
   supplier: { singular: "Supplier", listPath: "suppliers" },
 };
 
+const CUSTOMER_CATEGORIES = [
+  { value: "normal", label: "Normal Customer" },
+  { value: "distributor", label: "Distributor" },
+  { value: "wholesaler", label: "Wholesaler" },
+  { value: "retailer", label: "Retailer" },
+];
+
 const EMPTY_FORM = {
   name: "",
   address: "",
   email: "",
   phone: "",
   vatNumber: "",
+  customerCategory: "normal",
+  country: "",
 };
 
 const validateForm = (form) => {
@@ -57,6 +66,8 @@ const ClientForm = ({ type }) => {
           email: client.email || "",
           phone: client.phone || "",
           vatNumber: client.vatNumber || "",
+          customerCategory: client.customerCategory || "normal",
+          country: client.country || "",
         });
       } catch (err) {
         setError(`Couldn't load this ${labels.singular.toLowerCase()}.`);
@@ -73,7 +84,6 @@ const ClientForm = ({ type }) => {
     setForm((prev) => ({ ...prev, [field]: event.target.value }));
   };
 
-  // Strips anything that isn't a digit, and caps the length as the user types
   const handleDigitsChange = (field, maxLength) => (event) => {
     const digitsOnly = event.target.value
       .replace(/\D/g, "")
@@ -131,6 +141,36 @@ const ClientForm = ({ type }) => {
             required
           />
         </div>
+
+        {type === "customer" && (
+          <div className="login-field">
+            <label htmlFor="customerCategory">Customer Type</label>
+            <select
+              id="customerCategory"
+              value={form.customerCategory}
+              onChange={handleChange("customerCategory")}
+            >
+              {CUSTOMER_CATEGORIES.map((c) => (
+                <option key={c.value} value={c.value}>
+                  {c.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {type === "supplier" && (
+          <div className="login-field">
+            <label htmlFor="country">Country</label>
+            <input
+              id="country"
+              type="text"
+              placeholder="e.g. China, India, Nepal"
+              value={form.country}
+              onChange={handleChange("country")}
+            />
+          </div>
+        )}
 
         <div className="login-field">
           <label htmlFor="address">Address</label>
