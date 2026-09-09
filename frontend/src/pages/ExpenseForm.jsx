@@ -1,6 +1,10 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { createExpense } from "../services/expenseService";
+import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import {
+  createExpense,
+  fetchExpenseById,
+  updateExpense,
+} from "../services/expenseService";
 import DateInput from "../components/DateInput";
 
 const CATEGORIES = [
@@ -16,16 +20,46 @@ const CATEGORIES = [
 const EMPTY_FORM = {
   category: "Transport",
   date: "",
+  dateMode: "BS",
   amount: "",
   description: "",
 };
 
 const ExpenseForm = () => {
+  const { id } = useParams();
+  const isEditMode = Boolean(id);
+
   const [form, setForm] = useState(EMPTY_FORM);
+  const [loading, setLoading] = useState(isEditMode);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!isEditMode) return;
+
+    const loadExpense = async () => {
+      setLoading(true);
+      setError("");
+      try {
+        const result = await fetchExpenseById(id);
+        const expense = result.data;
+        setForm({
+          category: expense.category || "Transport",
+          date: expense.date || "",
+          dateMode: expense.dateMode || "BS",
+          amount: String(expense.amount ?? ""),
+          description: expense.description || "",
+        });
+      } catch (err) {
+        setError("Couldn't load this expense for editing.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadExpense();
+  }, [id, isEditMode]);
 
   const handleChange = (field) => (event) => {
     setForm((prev) => ({ ...prev, [field]: event.target.value }));
@@ -39,25 +73,40 @@ const ExpenseForm = () => {
     const amt = Number(form.amount);
     if (!amt || amt <= 0) return setError("Amount must be greater than 0.");
 
+    const payload = {
+      category: form.category,
+      date: form.date,
+      dateMode: form.dateMode,
+      amount: amt,
+      description: form.description,
+    };
+
     setSaving(true);
     try {
-      await createExpense({
-        category: form.category,
-        date: form.date,
-        amount: amt,
-        description: form.description,
-      });
-      navigate("/dashboard/expenses", { replace: true });
+      if (isEditMode) {
+        await updateExpense(id, payload);
+        navigate(`/dashboard/expenses/${id}`, { replace: true });
+      } else {
+        await createExpense(payload);
+        navigate("/dashboard/expenses", { replace: true });
+      }
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to save expense.");
+      setError(
+        err.response?.data?.message ||
+          (isEditMode ? "Failed to update expense." : "Failed to save expense."),
+      );
     } finally {
       setSaving(false);
     }
   };
 
+  if (loading) return <p>Loading...</p>;
+
   return (
     <div>
-      <h1 className="page-title">New Expense</h1>
+      <h1 className="page-title">
+        {isEditMode ? "Edit Expense" : "New Expense"}
+      </h1>
 
       <form className="form-card" onSubmit={handleSubmit}>
         <div className="login-field">
@@ -76,11 +125,13 @@ const ExpenseForm = () => {
         </div>
 
         <div className="login-field">
-          <label htmlFor="date">Date</label>
           <DateInput
             id="date"
+            label="Date"
             value={form.date}
             onChange={(adIso) => setForm((prev) => ({ ...prev, date: adIso }))}
+            mode={form.dateMode}
+            onModeChange={(m) => setForm((prev) => ({ ...prev, dateMode: m }))}
           />
         </div>
 
@@ -111,12 +162,22 @@ const ExpenseForm = () => {
 
         <div className="form-actions">
           <button className="btn btn-primary" type="submit" disabled={saving}>
-            {saving ? "Saving..." : "Save Expense"}
+            {saving
+              ? "Saving..."
+              : isEditMode
+                ? "Update Expense"
+                : "Save Expense"}
           </button>
           <button
             className="btn btn-outline"
             type="button"
-            onClick={() => navigate("/dashboard/expenses")}
+            onClick={() =>
+              navigate(
+                isEditMode
+                  ? `/dashboard/expenses/${id}`
+                  : "/dashboard/expenses",
+              )
+            }
           >
             Cancel
           </button>

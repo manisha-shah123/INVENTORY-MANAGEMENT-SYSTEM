@@ -32,6 +32,13 @@ const productSchema = new mongoose.Schema(
       type: String,
       trim: true,
       default: "pcs",
+      validate: {
+        validator: function (value) {
+          if (!value) return true;
+          return /[A-Za-z]/.test(value);
+        },
+        message: "Unit must be a word like pcs, litre, box — not just a number",
+      },
     },
 
     purchasePrice: {

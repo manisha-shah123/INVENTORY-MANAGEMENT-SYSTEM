@@ -17,6 +17,11 @@ export const createInvoice = async (payload) => {
   return response.data;
 };
 
+export const updateInvoice = async (id, payload) => {
+  const response = await api.put(`/invoices/${id}`, payload);
+  return response.data;
+};
+
 export const deleteInvoice = async (id) => {
   const response = await api.delete(`/invoices/${id}`);
   return response.data;

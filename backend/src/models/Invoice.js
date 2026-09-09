@@ -66,6 +66,12 @@ const invoiceSchema = new mongoose.Schema(
       },
     },
 
+    dateMode: {
+      type: String,
+      enum: ["AD", "BS"],
+      default: "BS",
+    },
+
     paymentMode: {
       type: String,
       enum: ["cash", "credit", "bank"],

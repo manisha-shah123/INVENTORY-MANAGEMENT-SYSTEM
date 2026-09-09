@@ -29,6 +29,12 @@ const purchaseSchema = new mongoose.Schema(
       },
     },
 
+    dateMode: {
+      type: String,
+      enum: ["AD", "BS"],
+      default: "BS",
+    },
+
     invoiceNumber: {
       type: String,
       required: [true, "Invoice number is required"],

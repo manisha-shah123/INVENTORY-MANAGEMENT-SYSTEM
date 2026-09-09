@@ -5,6 +5,7 @@ import {
   categoryService,
   gradeService,
   sizeService,
+  hsCodeService,
 } from "../services/attributeService";
 
 const ProductAttributes = () => {
@@ -16,8 +17,8 @@ const ProductAttributes = () => {
         <div>
           <h1 className="page-title">Manage Product Attributes</h1>
           <p className="page-subtitle">
-            Add, edit, or delete Brands, Categories, Grades, and Sizes used
-            across products.
+            Add, edit, or delete Brands, Categories, Grades, Sizes, and HS
+            Codes used across products.
           </p>
         </div>
         <button
@@ -34,6 +35,7 @@ const ProductAttributes = () => {
 
         <AttributeManager title="Grade" service={gradeService} />
         <AttributeManager title="Size" service={sizeService} />
+        <AttributeManager title="HS Code" service={hsCodeService} />
       </div>
     </div>
   );

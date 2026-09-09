@@ -54,6 +54,7 @@ const createInvoice = async (req, res) => {
       address,
       contactNumber,
       date,
+      dateMode,
       paymentMode,
       items,
       remarks,
@@ -211,6 +212,7 @@ const createInvoice = async (req, res) => {
       address: address || customer.address || "",
       contactNumber: contactNumber || customer.phone || "",
       date,
+      dateMode: dateMode === "AD" ? "AD" : "BS",
       paymentMode: paymentMode || "cash",
       items: preparedItems.map(({ productDoc, ...rest }) => rest),
       remarks,
@@ -269,6 +271,267 @@ const createInvoice = async (req, res) => {
   }
 };
 
+const updateInvoice = async (req, res) => {
+  try {
+    const invoice = await Invoice.findById(req.params.id);
+    if (!invoice) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Invoice not found" });
+    }
+
+    const {
+      invoiceNumber,
+      customerId,
+      buyerName,
+      vatNumber,
+      address,
+      contactNumber,
+      date,
+      dateMode,
+      paymentMode,
+      items,
+      remarks,
+      discount,
+      amountReceived,
+    } = req.body;
+
+    if (!invoiceNumber || !invoiceNumber.trim()) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invoice number is required" });
+    }
+    if (!customerId) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Client is required" });
+    }
+    if (!date) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Date is required" });
+    }
+    if (!Array.isArray(items) || items.length === 0) {
+      return res
+        .status(400)
+        .json({
+          success: false,
+          message: "Invoice must have at least one item",
+        });
+    }
+
+    const customer = await Client.findById(customerId);
+    if (!customer || customer.type !== "customer") {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid client" });
+    }
+
+    // Treat the invoice's current items as "returned to stock" before re-applying the new items
+    const restoreByProduct = new Map();
+    for (const item of invoice.items) {
+      const key = String(item.product);
+      restoreByProduct.set(
+        key,
+        (restoreByProduct.get(key) || 0) + item.quantity,
+      );
+    }
+
+    const neededByProduct = new Map();
+    const preparedItems = [];
+
+    for (const line of items) {
+      const qty = Number(line.quantity);
+      const rate = Number(line.rate);
+
+      if (!line.productId) {
+        return res
+          .status(400)
+          .json({ success: false, message: "Every item needs a product" });
+      }
+      if (!Number.isFinite(qty) || qty <= 0) {
+        return res
+          .status(400)
+          .json({
+            success: false,
+            message: "Quantity must be greater than 0 for every item",
+          });
+      }
+      if (!Number.isFinite(rate) || rate < 0) {
+        return res
+          .status(400)
+          .json({ success: false, message: "Rate cannot be negative" });
+      }
+
+      const product = await Product.findById(line.productId);
+      if (!product) {
+        return res
+          .status(400)
+          .json({
+            success: false,
+            message: "Invalid product in invoice items",
+          });
+      }
+
+      if (rate < product.purchasePrice) {
+        return res.status(400).json({
+          success: false,
+          message: `Rate for ${product.name} cannot be less than its purchase price (${product.purchasePrice}).`,
+        });
+      }
+
+      neededByProduct.set(
+        String(product._id),
+        (neededByProduct.get(String(product._id)) || 0) + qty,
+      );
+
+      preparedItems.push({
+        product: product._id,
+        hsCode: line.hsCode || product.hsCode || "",
+        grade: line.grade || product.grade || "",
+        size: line.size || product.size || "",
+        quantity: qty,
+        rate,
+        amount: qty * rate,
+      });
+    }
+
+    // Check stock: effective available = currentStock + qty being restored - qty now needed
+    const affectedProductIds = new Set([
+      ...restoreByProduct.keys(),
+      ...neededByProduct.keys(),
+    ]);
+
+    const productDocs = new Map();
+    for (const productId of affectedProductIds) {
+      const product = await Product.findById(productId);
+      if (!product) continue;
+      productDocs.set(productId, product);
+
+      const restored = restoreByProduct.get(productId) || 0;
+      const needed = neededByProduct.get(productId) || 0;
+      const effectiveAvailable = product.currentStock + restored;
+
+      if (needed > effectiveAvailable) {
+        return res.status(400).json({
+          success: false,
+          message: `Insufficient stock for ${product.name}. Only ${effectiveAvailable} ${product.unit} available, but invoice needs ${needed}.`,
+        });
+      }
+    }
+
+    const subtotal = preparedItems.reduce((sum, it) => sum + it.amount, 0);
+    const discountAmt = Number(discount) || 0;
+
+    if (discountAmt < 0) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Discount cannot be negative" });
+    }
+    if (discountAmt > subtotal) {
+      return res
+        .status(400)
+        .json({
+          success: false,
+          message: "Discount cannot exceed the subtotal",
+        });
+    }
+
+    const taxableAmount = subtotal - discountAmt;
+    const vatAmount = taxableAmount * VAT_RATE;
+    const grandTotal = taxableAmount + vatAmount;
+    const received = Number(amountReceived) || 0;
+
+    if (received < 0) {
+      return res
+        .status(400)
+        .json({
+          success: false,
+          message: "Amount received cannot be negative",
+        });
+    }
+    if (received > grandTotal) {
+      return res
+        .status(400)
+        .json({
+          success: false,
+          message: "Amount received cannot exceed the grand total",
+        });
+    }
+
+    // Apply the net stock change per affected product
+    for (const productId of affectedProductIds) {
+      const product = productDocs.get(productId);
+      if (!product) continue;
+      const restored = restoreByProduct.get(productId) || 0;
+      const needed = neededByProduct.get(productId) || 0;
+      const netChange = restored - needed;
+      if (netChange === 0) continue;
+
+      const newStock = product.currentStock + netChange;
+      product.currentStock = newStock;
+      await product.save();
+
+      await StockMovement.create({
+        product: product._id,
+        type: netChange >= 0 ? "in" : "out",
+        quantity: Math.abs(netChange),
+        reason: `Invoice #${invoice.invoiceNumber} updated`,
+        balanceAfter: newStock,
+      });
+    }
+
+    invoice.invoiceNumber = invoiceNumber.trim();
+    invoice.customer = customerId;
+    invoice.buyerName = buyerName || customer.name;
+    invoice.vatNumber = vatNumber || customer.vatNumber || "";
+    invoice.address = address || customer.address || "";
+    invoice.contactNumber = contactNumber || customer.phone || "";
+    invoice.date = date;
+    invoice.dateMode = dateMode === "AD" ? "AD" : "BS";
+    invoice.paymentMode = paymentMode || "cash";
+    invoice.items = preparedItems;
+    invoice.remarks = remarks;
+    invoice.subtotal = subtotal;
+    invoice.discount = discountAmt;
+    invoice.taxableAmount = taxableAmount;
+    invoice.vatAmount = vatAmount;
+    invoice.grandTotal = grandTotal;
+    invoice.amountReceived = received;
+    invoice.dueAmount = grandTotal - received;
+
+    await invoice.save();
+
+    const populatedInvoice = await Invoice.findById(invoice._id)
+      .populate("customer", "name")
+      .populate("items.product", "name sku unit");
+
+    res.status(200).json({
+      success: true,
+      message: "Invoice updated successfully",
+      data: populatedInvoice,
+    });
+  } catch (error) {
+    console.error("Update invoice error:", error);
+    if (error.name === "ValidationError") {
+      const message =
+        Object.values(error.errors)[0]?.message || "Validation failed";
+      return res.status(400).json({ success: false, message });
+    }
+    if (error.code === 11000) {
+      return res
+        .status(400)
+        .json({
+          success: false,
+          message: "An invoice with this number already exists",
+        });
+    }
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to update invoice" });
+  }
+};
+
 const deleteInvoice = async (req, res) => {
   try {
     const invoice = await Invoice.findById(req.params.id);
@@ -321,5 +584,6 @@ module.exports = {
   getInvoices,
   getInvoiceById,
   createInvoice,
+  updateInvoice,
   deleteInvoice,
 };

@@ -27,6 +27,11 @@ const paymentSchema = new mongoose.Schema(
         message: "Date must be in YYYY-MM-DD format",
       },
     },
+    dateMode: {
+      type: String,
+      enum: ["AD", "BS"],
+      default: "BS",
+    },
     amount: {
       type: Number,
       required: [true, "Amount is required"],

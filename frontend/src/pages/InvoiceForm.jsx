@@ -1,8 +1,17 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { fetchClients } from "../services/clientService";
 import { fetchProducts } from "../services/productService";
-import { createInvoice } from "../services/invoiceService";
+import {
+  createInvoice,
+  fetchInvoiceById,
+  updateInvoice,
+} from "../services/invoiceService";
+import {
+  hsCodeService,
+  gradeService,
+  sizeService,
+} from "../services/attributeService";
 import DateInput from "../components/DateInput";
 
 const VAT_RATE = 0.13;
@@ -17,14 +26,21 @@ const EMPTY_LINE = {
 };
 
 const InvoiceForm = () => {
+  const { id } = useParams();
+  const isEditMode = Boolean(id);
+
   const [customers, setCustomers] = useState([]);
   const [products, setProducts] = useState([]);
+  const [hsCodes, setHsCodes] = useState([]);
+  const [grades, setGrades] = useState([]);
+  const [sizes, setSizes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
   const [invoiceNumber, setInvoiceNumber] = useState("");
   const [date, setDate] = useState("");
+  const [dateMode, setDateMode] = useState("BS");
   const [paymentMode, setPaymentMode] = useState("cash");
 
   const [customerId, setCustomerId] = useState("");
@@ -43,25 +59,65 @@ const InvoiceForm = () => {
   useEffect(() => {
     const loadOptions = async () => {
       try {
-        const [customerResult, productResult] = await Promise.all([
-          fetchClients("customer"),
-          fetchProducts(),
-        ]);
+        const [customerResult, productResult, hsCodeResult, gradeResult, sizeResult] =
+          await Promise.all([
+            fetchClients("customer"),
+            fetchProducts(),
+            hsCodeService.fetchAll(),
+            gradeService.fetchAll(),
+            sizeService.fetchAll(),
+          ]);
         setCustomers(customerResult.data);
         setProducts(productResult.data);
+        setHsCodes(hsCodeResult.data);
+        setGrades(gradeResult.data);
+        setSizes(sizeResult.data);
+
+        if (isEditMode) {
+          const invoiceResult = await fetchInvoiceById(id);
+          const invoice = invoiceResult.data;
+
+          setInvoiceNumber(invoice.invoiceNumber || "");
+          setDate(invoice.date || "");
+          setDateMode(invoice.dateMode || "BS");
+          setPaymentMode(invoice.paymentMode || "cash");
+          setCustomerId(invoice.customer?._id || "");
+          setBuyerName(invoice.buyerName || "");
+          setVatNumber(invoice.vatNumber || "");
+          setAddress(invoice.address || "");
+          setContactNumber(invoice.contactNumber || "");
+          setRemarks(invoice.remarks || "");
+          setDiscount(String(invoice.discount ?? "0"));
+          setAmountReceived(String(invoice.amountReceived ?? ""));
+          setLines(
+            (invoice.items || []).map((item) => ({
+              productId: item.product?._id || "",
+              hsCode: item.hsCode || "",
+              grade: item.grade || "",
+              size: item.size || "",
+              quantity: String(item.quantity ?? ""),
+              rate: String(item.rate ?? ""),
+            })),
+          );
+        }
       } catch (err) {
-        setError("Couldn't load customers or products.");
+        setError(
+          isEditMode
+            ? "Couldn't load the invoice for editing."
+            : "Couldn't load customers or products.",
+        );
       } finally {
         setLoading(false);
       }
     };
     loadOptions();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
 
   const handleClientSelect = (event) => {
-    const id = event.target.value;
-    setCustomerId(id);
-    const client = customers.find((c) => c._id === id);
+    const clientId = event.target.value;
+    setCustomerId(clientId);
+    const client = customers.find((c) => c._id === clientId);
     if (client) {
       setBuyerName(client.name || "");
       setVatNumber(client.vatNumber || "");
@@ -74,15 +130,6 @@ const InvoiceForm = () => {
     setLines((prev) => {
       const next = [...prev];
       next[index] = { ...next[index], [field]: value };
-
-      if (field === "productId") {
-        const product = products.find((p) => p._id === value);
-        if (product) {
-          next[index].hsCode = product.hsCode || "";
-          next[index].grade = product.grade || "";
-          next[index].size = product.size || "";
-        }
-      }
       return next;
     });
   };
@@ -108,7 +155,7 @@ const InvoiceForm = () => {
     if (!invoiceNumber.trim()) return setError("Invoice number is required.");
     if (!customerId) return setError("Please select a client.");
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date))
-      return setError("Date must be in YYYY-MM-DD format (Bikram Sambat).");
+      return setError("Please select a date.");
     if (lines.length === 0) return setError("Add at least one item.");
 
     for (const line of lines) {
@@ -134,32 +181,45 @@ const InvoiceForm = () => {
     if (receivedNum > grandTotal)
       return setError("Amount received cannot exceed the grand total.");
 
+    const payload = {
+      invoiceNumber,
+      customerId,
+      buyerName,
+      vatNumber,
+      address,
+      contactNumber,
+      date,
+      dateMode,
+      paymentMode,
+      items: lines.map((l) => ({
+        productId: l.productId,
+        hsCode: l.hsCode,
+        grade: l.grade,
+        size: l.size,
+        quantity: Number(l.quantity),
+        rate: Number(l.rate),
+      })),
+      remarks,
+      discount: discountNum,
+      amountReceived: receivedNum,
+    };
+
     setSaving(true);
     try {
-      await createInvoice({
-        invoiceNumber,
-        customerId,
-        buyerName,
-        vatNumber,
-        address,
-        contactNumber,
-        date,
-        paymentMode,
-        items: lines.map((l) => ({
-          productId: l.productId,
-          hsCode: l.hsCode,
-          grade: l.grade,
-          size: l.size,
-          quantity: Number(l.quantity),
-          rate: Number(l.rate),
-        })),
-        remarks,
-        discount: discountNum,
-        amountReceived: receivedNum,
-      });
-      navigate("/dashboard/sales", { replace: true });
+      if (isEditMode) {
+        await updateInvoice(id, payload);
+        navigate(`/dashboard/sales/${id}`, { replace: true });
+      } else {
+        const result = await createInvoice(payload);
+        navigate(`/dashboard/sales/${result.data._id}`, { replace: true });
+      }
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to create invoice.");
+      setError(
+        err.response?.data?.message ||
+          (isEditMode
+            ? "Failed to update invoice."
+            : "Failed to create invoice."),
+      );
     } finally {
       setSaving(false);
     }
@@ -169,7 +229,9 @@ const InvoiceForm = () => {
 
   return (
     <div>
-      <h1 className="page-title">Create VAT Invoice</h1>
+      <h1 className="page-title">
+        {isEditMode ? "Edit VAT Invoice" : "Create VAT Invoice"}
+      </h1>
 
       <form onSubmit={handleSubmit}>
         <div
@@ -188,8 +250,14 @@ const InvoiceForm = () => {
               />
             </div>
             <div className="login-field" style={{ flex: 1, minWidth: 200 }}>
-              <label>Date</label>
-              <DateInput value={date} onChange={setDate} />
+              <DateInput
+                id="date"
+                label="Date"
+                value={date}
+                onChange={setDate}
+                mode={dateMode}
+                onModeChange={setDateMode}
+              />
             </div>
             <div className="login-field" style={{ flex: 1, minWidth: 200 }}>
               <label>Payment Mode</label>
@@ -318,16 +386,50 @@ const InvoiceForm = () => {
                       </select>
                     </td>
                     <td>
-                      <input
-                        type="text"
+                      <select
                         value={line.hsCode}
                         onChange={(e) =>
                           updateLine(index, "hsCode", e.target.value)
                         }
-                      />
+                      >
+                        <option value="">-- Select --</option>
+                        {hsCodes.map((h) => (
+                          <option key={h._id} value={h.name}>
+                            {h.name}
+                          </option>
+                        ))}
+                      </select>
                     </td>
-                    <td>{line.grade || "—"}</td>
-                    <td>{line.size || "—"}</td>
+                    <td>
+                      <select
+                        value={line.grade}
+                        onChange={(e) =>
+                          updateLine(index, "grade", e.target.value)
+                        }
+                      >
+                        <option value="">-- Select --</option>
+                        {grades.map((g) => (
+                          <option key={g._id} value={g.name}>
+                            {g.name}
+                          </option>
+                        ))}
+                      </select>
+                    </td>
+                    <td>
+                      <select
+                        value={line.size}
+                        onChange={(e) =>
+                          updateLine(index, "size", e.target.value)
+                        }
+                      >
+                        <option value="">-- Select --</option>
+                        {sizes.map((s) => (
+                          <option key={s._id} value={s.name}>
+                            {s.name}
+                          </option>
+                        ))}
+                      </select>
+                    </td>
                     <td>
                       <input
                         type="number"
@@ -454,12 +556,20 @@ const InvoiceForm = () => {
 
         <div className="form-actions" style={{ marginTop: 20 }}>
           <button className="btn btn-primary" type="submit" disabled={saving}>
-            {saving ? "Saving..." : "Save Invoice"}
+            {saving
+              ? "Saving..."
+              : isEditMode
+                ? "Update Invoice"
+                : "Save Invoice"}
           </button>
           <button
             className="btn btn-outline"
             type="button"
-            onClick={() => navigate("/dashboard/sales")}
+            onClick={() =>
+              navigate(
+                isEditMode ? `/dashboard/sales/${id}` : "/dashboard/sales",
+              )
+            }
           >
             Cancel
           </button>

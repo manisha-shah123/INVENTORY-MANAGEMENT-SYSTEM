@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { fetchPayments, deletePayment } from "../services/paymentService";
-import { formatBsFromAd } from "../utils/bsDate";
+import { formatDateByMode } from "../utils/bsDate";
 
 const PaymentList = () => {
   const [payments, setPayments] = useState([]);
@@ -70,7 +70,7 @@ const PaymentList = () => {
           <table className="data-table">
             <thead>
               <tr>
-                <th>Date (BS)</th>
+                <th>Date</th>
                 <th>Type</th>
                 <th>Client</th>
                 <th>Invoice #</th>
@@ -83,7 +83,7 @@ const PaymentList = () => {
             <tbody>
               {payments.map((payment) => (
                 <tr key={payment._id}>
-                  <td>{formatBsFromAd(payment.date)}</td>
+                  <td>{formatDateByMode(payment.date, payment.dateMode)}</td>
                   <td>
                     <span
                       className={
@@ -105,12 +105,30 @@ const PaymentList = () => {
                   </td>
                   <td>{payment.remarks || "—"}</td>
                   <td className="table-actions-col">
-                    <button
-                      className="btn btn-outline btn-sm btn-danger"
-                      onClick={() => handleDelete(payment)}
-                    >
-                      Delete
-                    </button>
+                    <div className="table-actions">
+                      <button
+                        className="btn btn-outline btn-sm"
+                        onClick={() =>
+                          navigate(`/dashboard/hisab-kitab/${payment._id}`)
+                        }
+                      >
+                        View
+                      </button>
+                      <button
+                        className="btn btn-outline btn-sm"
+                        onClick={() =>
+                          navigate(`/dashboard/hisab-kitab/${payment._id}/edit`)
+                        }
+                      >
+                        Edit
+                      </button>
+                      <button
+                        className="btn btn-outline btn-sm btn-danger"
+                        onClick={() => handleDelete(payment)}
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}

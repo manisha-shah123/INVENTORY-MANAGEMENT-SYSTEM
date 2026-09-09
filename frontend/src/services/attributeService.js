@@ -12,3 +12,4 @@ export const brandService = makeService("brands");
 export const categoryService = makeService("categories");
 export const gradeService = makeService("grades");
 export const sizeService = makeService("sizes");
+export const hsCodeService = makeService("hscodes");

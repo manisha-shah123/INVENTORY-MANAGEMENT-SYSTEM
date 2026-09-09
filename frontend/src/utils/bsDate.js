@@ -46,6 +46,29 @@ export const formatBsFromAd = (adIso) => {
   return bs ? `${bs} BS` : adIso;
 };
 
+// Converts a YYYY-MM-DD string (AD or BS, doesn't matter, it's just digits)
+// into the mm/dd/yyyy shape used by the visible text of both date inputs.
+export const isoToSlashDisplay = (iso) => {
+  if (!iso) return "";
+  const [y, m, d] = iso.split("-");
+  if (!y || !m || !d) return iso;
+  return `${m}/${d}/${y}`;
+};
+
+// Renders a record's stored AD date the way the user originally entered it:
+// if they picked AD, show the AD date; if they picked BS, convert & show BS.
+// `mode` is the record's saved dateMode ("AD" | "BS"), defaulting to "BS" for
+// older records created before this field existed.
+export const formatDateByMode = (adIso, mode) => {
+  if (!adIso) return "—";
+  const effectiveMode = mode === "AD" ? "AD" : "BS";
+  if (effectiveMode === "AD") {
+    return `${isoToSlashDisplay(adIso)} AD`;
+  }
+  const bs = adToBsSafe(adIso);
+  return bs ? `${isoToSlashDisplay(bs)} BS` : `${adIso} BS`;
+};
+
 // Finds how many days are in a BS month by walking forward day-by-day in AD
 // and checking when the BS month rolls over. Small loop, safe for UI use.
 export const getDaysInBsMonth = (bsYear, bsMonth) => {

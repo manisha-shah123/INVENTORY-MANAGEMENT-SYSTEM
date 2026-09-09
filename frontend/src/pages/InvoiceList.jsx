@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { fetchInvoices, deleteInvoice } from "../services/invoiceService";
-import { formatBsFromAd } from "../utils/bsDate";
+import { formatDateByMode } from "../utils/bsDate";
 
 const InvoiceList = () => {
   const [invoices, setInvoices] = useState([]);
@@ -70,7 +70,7 @@ const InvoiceList = () => {
           <table className="data-table">
             <thead>
               <tr>
-                <th>Date (BS)</th>
+                <th>Date</th>
                 <th>Invoice #</th>
                 <th>Client</th>
                 <th>Items</th>
@@ -83,7 +83,7 @@ const InvoiceList = () => {
             <tbody>
               {invoices.map((invoice) => (
                 <tr key={invoice._id}>
-                  <td>{formatBsFromAd(invoice.date)}</td>
+                  <td>{formatDateByMode(invoice.date, invoice.dateMode)}</td>
                   <td>{invoice.invoiceNumber}</td>
                   <td>{invoice.customer?.name || "—"}</td>
                   <td>{invoice.items.length}</td>
@@ -95,12 +95,30 @@ const InvoiceList = () => {
                     </span>
                   </td>
                   <td className="table-actions-col">
-                    <button
-                      className="btn btn-outline btn-sm btn-danger"
-                      onClick={() => handleDelete(invoice)}
-                    >
-                      Delete
-                    </button>
+                    <div className="table-actions">
+                      <button
+                        className="btn btn-outline btn-sm"
+                        onClick={() =>
+                          navigate(`/dashboard/sales/${invoice._id}`)
+                        }
+                      >
+                        View
+                      </button>
+                      <button
+                        className="btn btn-outline btn-sm"
+                        onClick={() =>
+                          navigate(`/dashboard/sales/${invoice._id}/edit`)
+                        }
+                      >
+                        Edit
+                      </button>
+                      <button
+                        className="btn btn-outline btn-sm btn-danger"
+                        onClick={() => handleDelete(invoice)}
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}

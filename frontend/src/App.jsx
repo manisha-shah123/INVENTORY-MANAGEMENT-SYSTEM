@@ -13,10 +13,13 @@ import PurchaseList from "./pages/PurchaseList";
 import PurchaseForm from "./pages/PurchaseForm";
 import InvoiceList from "./pages/InvoiceList";
 import InvoiceForm from "./pages/InvoiceForm";
+import InvoiceView from "./pages/InvoiceView";
 import PaymentList from "./pages/PaymentList";
 import PaymentForm from "./pages/PaymentForm";
+import PaymentView from "./pages/PaymentView";
 import ExpenseList from "./pages/ExpenseList";
 import ExpenseForm from "./pages/ExpenseForm";
+import ExpenseView from "./pages/ExpenseView";
 import ProductAttributes from "./pages/ProductAttributes";
 import ComingSoon from "./pages/ComingSoon";
 
@@ -63,10 +66,16 @@ function App() {
             <Route path="purchases/new" element={<PurchaseForm />} />
             <Route path="sales" element={<InvoiceList />} />
             <Route path="sales/new" element={<InvoiceForm />} />
+            <Route path="sales/:id" element={<InvoiceView />} />
+            <Route path="sales/:id/edit" element={<InvoiceForm />} />
             <Route path="hisab-kitab" element={<PaymentList />} />
             <Route path="hisab-kitab/new" element={<PaymentForm />} />
+            <Route path="hisab-kitab/:id" element={<PaymentView />} />
+            <Route path="hisab-kitab/:id/edit" element={<PaymentForm />} />
             <Route path="expenses" element={<ExpenseList />} />
             <Route path="expenses/new" element={<ExpenseForm />} />
+            <Route path="expenses/:id" element={<ExpenseView />} />
+            <Route path="expenses/:id/edit" element={<ExpenseForm />} />
           </Route>
 
           <Route path="*" element={<Navigate to="/dashboard" replace />} />

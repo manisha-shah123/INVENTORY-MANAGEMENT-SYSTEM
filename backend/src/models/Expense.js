@@ -33,6 +33,12 @@ const expenseSchema = new mongoose.Schema(
       },
     },
 
+    dateMode: {
+      type: String,
+      enum: ["AD", "BS"],
+      default: "BS",
+    },
+
     amount: {
       type: Number,
       required: [true, "Amount is required"],

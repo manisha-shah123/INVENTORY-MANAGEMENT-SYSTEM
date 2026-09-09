@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { fetchExpenses, deleteExpense } from "../services/expenseService";
-import { formatBsFromAd } from "../utils/bsDate";
+import { formatDateByMode } from "../utils/bsDate";
 
 const ExpenseList = () => {
   const [expenses, setExpenses] = useState([]);
@@ -70,7 +70,7 @@ const ExpenseList = () => {
           <table className="data-table">
             <thead>
               <tr>
-                <th>Date (BS)</th>
+                <th>Date</th>
                 <th>Category</th>
                 <th>Description</th>
                 <th>Amount</th>
@@ -80,17 +80,35 @@ const ExpenseList = () => {
             <tbody>
               {expenses.map((expense) => (
                 <tr key={expense._id}>
-                  <td>{formatBsFromAd(expense.date)}</td>
+                  <td>{formatDateByMode(expense.date, expense.dateMode)}</td>
                   <td>{expense.category}</td>
                   <td>{expense.description || "—"}</td>
                   <td>{expense.amount.toLocaleString()}</td>
                   <td className="table-actions-col">
-                    <button
-                      className="btn btn-outline btn-sm btn-danger"
-                      onClick={() => handleDelete(expense)}
-                    >
-                      Delete
-                    </button>
+                    <div className="table-actions">
+                      <button
+                        className="btn btn-outline btn-sm"
+                        onClick={() =>
+                          navigate(`/dashboard/expenses/${expense._id}`)
+                        }
+                      >
+                        View
+                      </button>
+                      <button
+                        className="btn btn-outline btn-sm"
+                        onClick={() =>
+                          navigate(`/dashboard/expenses/${expense._id}/edit`)
+                        }
+                      >
+                        Edit
+                      </button>
+                      <button
+                        className="btn btn-outline btn-sm btn-danger"
+                        onClick={() => handleDelete(expense)}
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}

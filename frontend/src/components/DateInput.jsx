@@ -4,11 +4,23 @@ import {
   adToBsSafe,
   bsToAdSafe,
   getDaysInBsMonth,
+  isoToSlashDisplay,
   todayAdIso,
 } from "../utils/bsDate";
 
-const DateInput = ({ id, value, onChange }) => {
-  const [mode, setMode] = useState("BS");
+const DateInput = ({ id, label, value, onChange, mode, onModeChange }) => {
+  const isControlled = mode !== undefined;
+  const [internalMode, setInternalMode] = useState("BS");
+  const activeMode = isControlled ? mode : internalMode;
+
+  const setMode = (next) => {
+    if (isControlled) {
+      onModeChange && onModeChange(next);
+    } else {
+      setInternalMode(next);
+    }
+  };
+
   const [calendarOpen, setCalendarOpen] = useState(false);
   const wrapperRef = useRef(null);
 
@@ -96,97 +108,130 @@ const DateInput = ({ id, value, onChange }) => {
 
   return (
     <div className="date-input-wrapper" ref={wrapperRef}>
-      <div className="date-input-toggle">
-        <button
-          type="button"
-          className={
-            mode === "BS" ? "date-toggle-btn active" : "date-toggle-btn"
-          }
-          onClick={() => setMode("BS")}
-        >
-          BS
-        </button>
-        <button
-          type="button"
-          className={
-            mode === "AD" ? "date-toggle-btn active" : "date-toggle-btn"
-          }
-          onClick={() => setMode("AD")}
-        >
-          AD
-        </button>
-      </div>
+      {label && <label className="date-input-label">{label}</label>}
 
-      {mode === "AD" ? (
-        <input
-          id={id}
-          type="date"
-          value={value || ""}
-          max={todayIso}
-          onChange={(e) => onChange(e.target.value)}
-        />
-      ) : (
-        <div className="bs-date-picker">
-          <input
-            id={id}
-            type="text"
-            readOnly
-            placeholder="Select a date"
-            value={currentBs ? `${currentBs} BS` : ""}
-            onFocus={() => setCalendarOpen(true)}
-            onClick={() => setCalendarOpen(true)}
-          />
-          {calendarOpen && (
-            <div className="bs-calendar-panel">
-              <div className="bs-calendar-header">
-                <button type="button" onClick={goPrevMonth}>
-                  &lt;
-                </button>
-                <span>
-                  {BS_MONTHS[viewMonth - 1]} {viewYear}
-                </span>
-                <button
-                  type="button"
-                  onClick={goNextMonth}
-                  disabled={viewIsCurrentOrFutureMonth}
-                >
-                  &gt;
-                </button>
-              </div>
-              <div className="bs-calendar-grid">
-                {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((d) => (
-                  <div key={d} className="bs-calendar-day-label">
-                    {d}
-                  </div>
-                ))}
-                {Array.from({ length: startWeekday }).map((_, i) => (
-                  <div key={`blank-${i}`} />
-                ))}
-                {Array.from({ length: daysInMonth }, (_, i) => i + 1).map(
-                  (day) => {
-                    const future = isFutureBs(viewYear, viewMonth, day);
-                    const isToday =
-                      viewYear === todayBsY &&
-                      viewMonth === todayBsM &&
-                      day === todayBsD;
-                    return (
-                      <button
-                        key={day}
-                        type="button"
-                        disabled={future}
-                        className={`bs-calendar-cell${isToday ? " today" : ""}`}
-                        onClick={() => handleDayClick(day)}
-                      >
-                        {day}
-                      </button>
-                    );
-                  },
-                )}
-              </div>
-            </div>
-          )}
+      <div className="date-input-row">
+        <div className="date-input-toggle">
+          <button
+            type="button"
+            className={
+              activeMode === "BS"
+                ? "date-toggle-btn active"
+                : "date-toggle-btn"
+            }
+            onClick={() => setMode("BS")}
+          >
+            BS
+          </button>
+          <button
+            type="button"
+            className={
+              activeMode === "AD"
+                ? "date-toggle-btn active"
+                : "date-toggle-btn"
+            }
+            onClick={() => setMode("AD")}
+          >
+            AD
+          </button>
         </div>
-      )}
+
+        {activeMode === "AD" ? (
+          <div className="date-input-field">
+            <input
+              id={id}
+              type="date"
+              value={value || ""}
+              max={todayIso}
+              onChange={(e) => onChange(e.target.value)}
+            />
+          </div>
+        ) : (
+          <div className="date-input-field bs-date-picker">
+            <input
+              id={id}
+              type="text"
+              readOnly
+              placeholder="mm/dd/yyyy"
+              value={currentBs ? isoToSlashDisplay(currentBs) : ""}
+              onFocus={() => setCalendarOpen(true)}
+              onClick={() => setCalendarOpen(true)}
+            />
+            <button
+              type="button"
+              className="date-calendar-icon-btn"
+              aria-label="Open calendar"
+              onClick={() => setCalendarOpen((open) => !open)}
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <rect x="3" y="4" width="18" height="18" rx="2" />
+                <line x1="16" y1="2" x2="16" y2="6" />
+                <line x1="8" y1="2" x2="8" y2="6" />
+                <line x1="3" y1="10" x2="21" y2="10" />
+              </svg>
+            </button>
+
+            {calendarOpen && (
+              <div className="bs-calendar-panel">
+                <div className="bs-calendar-header">
+                  <button type="button" onClick={goPrevMonth}>
+                    &lt;
+                  </button>
+                  <span>
+                    {BS_MONTHS[viewMonth - 1]} {viewYear}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={goNextMonth}
+                    disabled={viewIsCurrentOrFutureMonth}
+                  >
+                    &gt;
+                  </button>
+                </div>
+                <div className="bs-calendar-grid">
+                  {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((d) => (
+                    <div key={d} className="bs-calendar-day-label">
+                      {d}
+                    </div>
+                  ))}
+                  {Array.from({ length: startWeekday }).map((_, i) => (
+                    <div key={`blank-${i}`} />
+                  ))}
+                  {Array.from({ length: daysInMonth }, (_, i) => i + 1).map(
+                    (day) => {
+                      const future = isFutureBs(viewYear, viewMonth, day);
+                      const isToday =
+                        viewYear === todayBsY &&
+                        viewMonth === todayBsM &&
+                        day === todayBsD;
+                      return (
+                        <button
+                          key={day}
+                          type="button"
+                          disabled={future}
+                          className={`bs-calendar-cell${isToday ? " today" : ""}`}
+                          onClick={() => handleDayClick(day)}
+                        >
+                          {day}
+                        </button>
+                      );
+                    },
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 };

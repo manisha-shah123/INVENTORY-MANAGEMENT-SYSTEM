@@ -16,9 +16,27 @@ const getExpenses = async (req, res) => {
   }
 };
 
+const getExpenseById = async (req, res) => {
+  try {
+    const expense = await Expense.findById(req.params.id);
+
+    if (!expense) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Expense not found" });
+    }
+
+    res.status(200).json({ success: true, data: expense });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to fetch expense" });
+  }
+};
+
 const createExpense = async (req, res) => {
   try {
-    const { category, date, amount, description } = req.body;
+    const { category, date, dateMode, amount, description } = req.body;
 
     if (!category) {
       return res
@@ -41,6 +59,7 @@ const createExpense = async (req, res) => {
     const expense = await Expense.create({
       category,
       date,
+      dateMode: dateMode === "AD" ? "AD" : "BS",
       amount: amt,
       description,
     });
@@ -59,6 +78,60 @@ const createExpense = async (req, res) => {
     res
       .status(500)
       .json({ success: false, message: "Failed to create expense" });
+  }
+};
+
+const updateExpense = async (req, res) => {
+  try {
+    const expense = await Expense.findById(req.params.id);
+    if (!expense) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Expense not found" });
+    }
+
+    const { category, date, dateMode, amount, description } = req.body;
+
+    if (!category) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Category is required" });
+    }
+    if (!date) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Date is required" });
+    }
+
+    const amt = Number(amount);
+    if (!Number.isFinite(amt) || amt <= 0) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Amount must be greater than 0" });
+    }
+
+    expense.category = category;
+    expense.date = date;
+    expense.dateMode = dateMode === "AD" ? "AD" : "BS";
+    expense.amount = amt;
+    expense.description = description;
+
+    await expense.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Expense updated successfully",
+      data: expense,
+    });
+  } catch (error) {
+    if (error.name === "ValidationError") {
+      const message =
+        Object.values(error.errors)[0]?.message || "Validation failed";
+      return res.status(400).json({ success: false, message });
+    }
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to update expense" });
   }
 };
 
@@ -84,6 +157,8 @@ const deleteExpense = async (req, res) => {
 
 module.exports = {
   getExpenses,
+  getExpenseById,
   createExpense,
+  updateExpense,
   deleteExpense,
 };

@@ -382,8 +382,73 @@ label {
   margin-top: 4px;
 }
 
+/* ---- Attribute manager (Brand/Category/Grade/Size/HS Code) ---- */
+.attribute-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 20px;
+}
+
+.attribute-manager {
+  background: #fff;
+  border: 1px solid #e2e6ea;
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.attribute-manager h3 {
+  margin-top: 0;
+}
+
+.attribute-add-form {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.attribute-add-form input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #d7dce1;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.attribute-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.attribute-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 0;
+  border-bottom: 1px solid #eef1f5;
+}
+
+.attribute-list li:last-child {
+  border-bottom: none;
+}
+
+.attribute-list li input {
+  flex: 1;
+  padding: 6px 10px;
+  border: 1px solid #d7dce1;
+  border-radius: 6px;
+}
+
 .date-input-wrapper {
   position: relative;
+}
+
+.date-input-label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: #334155;
 }
 
 .date-input-toggle {
@@ -407,8 +472,60 @@ label {
   border-color: #1e293b;
 }
 
+/* Shared shell for both the native AD <input type="date"> and the custom BS
+   text input, so the two modes line up pixel-for-pixel: a bordered box with
+   the date text on the left and a small square calendar affordance on the
+   right. */
+.date-input-field {
+  display: flex;
+  align-items: stretch;
+}
+.date-input-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.date-input-field input[type="date"] {
+  width: 100%;
+}
+
 .bs-date-picker {
   position: relative;
+  display: flex;
+  align-items: stretch;
+  border: 1px solid #d8dee5;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.bs-date-picker input[type="text"] {
+  flex: 1;
+  border: none;
+  border-radius: 8px 0 0 8px;
+  min-width: 0;
+}
+
+.bs-date-picker input[type="text"]:focus {
+  outline: none;
+}
+
+.date-calendar-icon-btn {
+  flex-shrink: 0;
+  width: 36px;
+  border: none;
+  border-left: 1px solid #e2e6ea;
+  border-radius: 0 8px 8px 0;
+  background: #f8fafc;
+  color: #475569;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.date-calendar-icon-btn:hover {
+  background: #eef2ff;
+  color: #1e293b;
 }
 
 .bs-calendar-panel {
@@ -480,4 +597,102 @@ label {
 .bs-calendar-cell:disabled {
   color: #cbd5e1;
   cursor: not-allowed;
+}
+
+/* ---- Invoice bill / print view ---- */
+.bill-print-area {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 32px;
+  max-width: 900px;
+}
+
+.bill-header {
+  text-align: center;
+  border-bottom: 2px solid #1e293b;
+  padding-bottom: 16px;
+  margin-bottom: 20px;
+}
+
+.bill-company-name {
+  margin: 0 0 4px 0;
+  font-size: 26px;
+}
+
+.bill-doc-title {
+  margin: 0;
+  color: #64748b;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  font-size: 13px;
+}
+
+.bill-meta-grid {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+
+.bill-meta-grid p {
+  margin: 4px 0;
+  font-size: 14px;
+}
+
+.bill-totals {
+  max-width: 340px;
+  margin-left: auto;
+  margin-top: 20px;
+}
+
+.bill-totals-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 0;
+  font-size: 14px;
+}
+
+.bill-totals-grand {
+  border-top: 1px solid #cbd5e1;
+  margin-top: 6px;
+  padding-top: 8px;
+  font-size: 17px;
+}
+
+.bill-remarks {
+  margin-top: 20px;
+  font-size: 14px;
+  color: #475569;
+}
+
+.bill-footer-note {
+  text-align: center;
+  margin-top: 36px;
+  font-style: italic;
+  color: #64748b;
+  font-size: 13px;
+}
+
+@media print {
+  .no-print,
+  .sidebar,
+  .topbar {
+    display: none !important;
+  }
+
+  .app-shell,
+  .main-area,
+  .page-content {
+    display: block !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .bill-print-area {
+    border: none;
+    padding: 0;
+    max-width: 100%;
+  }
 }

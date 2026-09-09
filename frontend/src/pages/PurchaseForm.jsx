@@ -9,6 +9,7 @@ const EMPTY_FORM = {
   supplierId: "",
   productId: "",
   date: "",
+  dateMode: "BS",
   invoiceNumber: "",
   quantity: "",
   rate: "",
@@ -75,6 +76,7 @@ const PurchaseForm = () => {
         supplierId: form.supplierId,
         productId: form.productId,
         date: form.date,
+        dateMode: form.dateMode,
         invoiceNumber: form.invoiceNumber,
         quantity,
         rate,
@@ -132,11 +134,13 @@ const PurchaseForm = () => {
         </div>
 
         <div className="login-field">
-          <label htmlFor="date">Date</label>
           <DateInput
             id="date"
+            label="Date"
             value={form.date}
             onChange={(adIso) => setForm((prev) => ({ ...prev, date: adIso }))}
+            mode={form.dateMode}
+            onModeChange={(m) => setForm((prev) => ({ ...prev, dateMode: m }))}
           />
         </div>
 
